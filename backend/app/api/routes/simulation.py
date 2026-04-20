@@ -133,3 +133,16 @@ def step_simulation():
         lanes=lanes_data,
         system_valid=system_valid
     )
+
+@router.get("/metrics")
+def get_metrics():
+    moving_count = len([r for r in sim.robots.values() if r.status.value == "moving"])
+    return {
+        "avg_wait_time": 0,
+        "throughput": 0,
+        "deadlock_count": 0,
+        "robots": {
+            "total": len(sim.robots),
+            "moving": moving_count
+        }
+    }

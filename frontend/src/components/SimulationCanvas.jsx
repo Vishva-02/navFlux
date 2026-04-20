@@ -1,41 +1,26 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-const SimulationCanvas = ({ robots, nodes, heatmap, gridSettings, isAuto }) => {
+const SimulationCanvas = ({ robots }) => {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
-  const [robotPositions, setRobotPositions] = useState({}); // visual x/y positions
+  const [robotPositions, setRobotPositions] = useState({});
 
-  // Helper to map node ID to grid coordinates
-  const getNodePos = (nodeId) => {
-    const mapping = {
-      'A': { r: 0, c: 0 },
-      'B': { r: 0, c: 1 },
-      'C': { r: 1, c: 1 },
-      'D': { r: 1, c: 0 },
-      'E': { r: 2, c: 1 },
-      'F': { r: 2, c: 0 },
-    };
-    return mapping[nodeId] || { r: 0, c: 0 };
+  const NODE_COORDS = {
+    'A': { x: 1, y: 1 },
+    'B': { x: 1, y: 9 },
+    'C': { x: 5, y: 9 },
+    'D': { x: 5, y: 1 },
+    'E': { x: 9, y: 9 },
+    'F': { x: 9, y: 1 }
   };
 
   const CHARGING_STATIONS = ['A', 'E'];
-
-  const getCanvasCoords = (r, c, width, height) => {
-    const padding = 60;
-    const cellW = (width - padding * 2) / (gridSettings.cols - 1 || 1);
-    const cellH = (height - padding * 2) / (gridSettings.rows - 1 || 1);
-    return {
-      x: padding + c * cellW,
-      y: padding + r * cellH
-    };
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    // Resize handler
     const resize = () => {
       const container = canvas.parentElement;
       canvas.width = container.offsetWidth;
@@ -44,136 +29,110 @@ const SimulationCanvas = ({ robots, nodes, heatmap, gridSettings, isAuto }) => {
     resize();
     window.addEventListener('resize', resize);
 
+    const getCanvasCoords = (x, y, width, height) => {
+      const padding = 50;
+      const usableW = width - padding * 2;
+      const usableH = height - padding * 2;
+      return {
+        cx: padding + (x / 10) * usableW,
+        cy: padding + (y / 10) * usableH
+      };
+    };
+
     const render = (time) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
       const { width, height } = canvas;
-      const nodesList = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-      // 1. Draw Grid & Congestion Glow
-      ctx.setLineDash([5, 5]);
+      // Draw Grid Background
+      ctx.strokeStyle = 'rgba(0, 242, 255, 0.03)';
       ctx.lineWidth = 1;
-
-      for (let r = 0; r < gridSettings.rows; r++) {
-        const start = getCanvasCoords(r, 0, width, height);
-        const end = getCanvasCoords(r, gridSettings.cols - 1, width, height);
+      for (let i = 0; i <= 10; i++) {
+        const { cx: xStart, cy: yStart } = getCanvasCoords(i, 0, width, height);
+        const { cx: xEnd, cy: yEnd } = getCanvasCoords(i, 10, width, height);
+        ctx.beginPath(); ctx.moveTo(xStart, yStart); ctx.lineTo(xEnd, yEnd); ctx.stroke();
         
-        // Find if this row segment is "hot" via heatmap
-        const rowHeat = heatmap?.reduce((acc, h) => acc + (h.congestion || 0), 0) / (heatmap?.length || 1);
-        ctx.strokeStyle = `rgba(0, 242, 255, ${0.05 + Math.min(0.4, rowHeat * 0.01)})`;
-        
-        ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke();
+        const { cx: xStart2, cy: yStart2 } = getCanvasCoords(0, i, width, height);
+        const { cx: xEnd2, cy: yEnd2 } = getCanvasCoords(10, i, width, height);
+        ctx.beginPath(); ctx.moveTo(xStart2, yStart2); ctx.lineTo(xEnd2, yEnd2); ctx.stroke();
       }
-      for (let c = 0; c < gridSettings.cols; c++) {
-        const start = getCanvasCoords(0, c, width, height);
-        const end = getCanvasCoords(gridSettings.rows - 1, c, width, height);
-        
-        ctx.strokeStyle = 'rgba(0, 242, 255, 0.05)';
-        ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke();
-      }
-      ctx.setLineDash([]);
 
-      // 2. Draw Nodes & Stations
-      nodesList.forEach(nodeId => {
-        const { r, c } = getNodePos(nodeId);
-        const { x, y } = getCanvasCoords(r, c, width, height);
+      // Draw Nodes
+      Object.keys(NODE_COORDS).forEach(nodeId => {
+        const { cx, cy } = getCanvasCoords(NODE_COORDS[nodeId].x, NODE_COORDS[nodeId].y, width, height);
         const isStation = CHARGING_STATIONS.includes(nodeId);
 
         if (isStation) {
-          // Glow Pulse for Station
-          const pulse = (Math.sin(time / 200) + 1) / 2;
-          ctx.beginPath();
-          ctx.arc(x, y, 15 + pulse * 10, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(245, 158, 11, ${0.1 * pulse})`;
-          ctx.fill();
-          
-          ctx.beginPath();
-          ctx.arc(x, y, 6, 0, Math.PI * 2);
-          ctx.fillStyle = '#f59e0b';
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = '#f59e0b';
-          ctx.fill();
-          ctx.shadowBlur = 0;
-          
-          ctx.font = 'bold 8px Rajdhani';
-          ctx.fillStyle = '#f59e0b';
-          ctx.fillText('⚡ POWER HUB', x + 15, y + 3);
-        } else {
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-          ctx.fill();
+           const pulse = (Math.sin(time / 200) + 1) / 2;
+           ctx.beginPath();
+           ctx.arc(cx, cy, 10 + pulse * 5, 0, Math.PI * 2);
+           ctx.fillStyle = `rgba(245, 158, 11, ${0.15 * (1 - pulse)})`;
+           ctx.fill();
         }
-        
-        ctx.font = '10px Orbitron';
-        ctx.fillStyle = isStation ? '#f59e0b' : 'rgba(255, 255, 255, 0.4)';
-        ctx.fillText(nodeId, x + 10, y - 10);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+        ctx.fillStyle = isStation ? '#f59e0b' : 'rgba(0, 242, 255, 0.3)';
+        ctx.fill();
+
+        ctx.font = 'bold 11px Orbitron';
+        ctx.fillStyle = isStation ? '#f59e0b' : 'rgba(255, 255, 255, 0.6)';
+        ctx.fillText(isStation ? `⚡ HUB ${nodeId}` : nodeId, cx + 10, cy - 10);
       });
 
-      // 3. Draw Robots & Interpolate
+      // Draw Robots
       robots.forEach(robot => {
-        const { r, c } = getNodePos(robot.current_node);
-        const target = getCanvasCoords(r, c, width, height);
+        const startNode = NODE_COORDS[robot.current_node] || { x: 0, y: 0 };
+        const endNode = NODE_COORDS[robot.next_node] || startNode;
         
-        const currentPos = robotPositions[robot.id] || target;
-        const dx = target.x - currentPos.x;
-        const dy = target.y - currentPos.y;
+        const targetX = startNode.x + (endNode.x - startNode.x) * (robot.progress || 0);
+        const targetY = startNode.y + (endNode.y - startNode.y) * (robot.progress || 0);
+        const target = getCanvasCoords(targetX, targetY, width, height);
         
-        const lerpX = currentPos.x + dx * 0.1;
-        const lerpY = currentPos.y + dy * 0.1;
+        const currentPos = robotPositions[robot.id] || { x: target.cx, y: target.cy };
+        const lerpX = currentPos.x + (target.cx - currentPos.x) * 0.15;
+        const lerpY = currentPos.y + (target.cy - currentPos.y) * 0.15;
 
-        // Path Projection
-        if (robot.goal_node && robot.goal_node !== robot.current_node) {
-          const goal = getNodePos(robot.goal_node);
-          const goalCoords = getCanvasCoords(goal.r, goal.c, width, height);
+        // Visual effects for states
+        if (robot.status === 'CHARGING') {
+          const pulse = (Math.sin(time / 200) + 1) / 2;
           ctx.beginPath();
-          ctx.moveTo(lerpX, lerpY);
-          ctx.lineTo(goalCoords.x, goalCoords.y);
-          ctx.strokeStyle = robot.battery < 20 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0, 242, 255, 0.1)';
-          ctx.setLineDash([2, 5]);
+          ctx.arc(lerpX, lerpY, 15 + pulse * 10, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(245, 158, 11, ${0.2 * (1 - pulse)})`;
+          ctx.fill();
+        } else if (robot.status === 'WAITING') {
+          ctx.beginPath();
+          ctx.arc(lerpX, lerpY, 12, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+          ctx.setLineDash([2, 2]);
           ctx.stroke();
           ctx.setLineDash([]);
         }
 
-        // --- Battery HUD Visual ---
-        const batColor = robot.battery > 70 ? '#10b981' : (robot.battery > 30 ? '#f59e0b' : '#ef4444');
-        
-        // Mini battery bar above robot
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(lerpX - 10, lerpY - 20, 20, 3);
+        // Battery HUD
+        const batColor = robot.battery_level > 70 ? '#10b981' : (robot.battery_level > 30 ? '#f59e0b' : '#ef4444');
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(lerpX - 10, lerpY - 18, 20, 3);
         ctx.fillStyle = batColor;
-        ctx.fillRect(lerpX - 10, lerpY - 20, Math.max(0, (robot.battery / 100) * 20), 3);
+        ctx.fillRect(lerpX - 10, lerpY - 18, (robot.battery_level / 100) * 20, 3);
 
-        // --- Emergency Pulse for Critical States ---
-        if (robot.battery < 20 || robot.status === 'waiting') {
-           const warnPulse = (Math.sin(time / 100) + 1) / 2;
-           ctx.beginPath();
-           ctx.arc(lerpX, lerpY, 12 + warnPulse * 6, 0, Math.PI * 2);
-           ctx.strokeStyle = robot.battery < 20 ? `rgba(239, 68, 68, ${0.4 * warnPulse})` : `rgba(255, 255, 255, ${0.2 * warnPulse})`;
-           ctx.stroke();
-        }
-
-        // Draw Robot
+        // Robot Body
         ctx.beginPath();
         ctx.arc(lerpX, lerpY, 10, 0, Math.PI * 2);
         
         let robotColor = 'var(--color-neon-cyan)';
-        if (robot.status === 'charging') robotColor = '#f59e0b';
-        else if (robot.battery < 20) robotColor = '#ef4444';
-        else if (robot.status === 'waiting') robotColor = '#fde68a';
-        else if (robot.status === 'stopped') robotColor = 'rgba(255,255,255,0.2)';
-        
+        if (robot.status === 'CHARGING') robotColor = '#f59e0b';
+        if (robot.status === 'WAITING') robotColor = '#ef4444';
+
         ctx.fillStyle = robotColor;
-        ctx.shadowBlur = (robot.status === 'charging' || robot.battery < 20) ? 20 : 12;
+        ctx.shadowBlur = (robot.status === 'CHARGING') ? 20 : 10;
         ctx.shadowColor = robotColor;
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Label
-        ctx.font = 'bold 8px Inter';
-        ctx.fillStyle = (robot.status === 'stopped' || robot.status === 'waiting') ? '#fff' : '#000';
+        ctx.font = 'bold 9px Rajdhani';
+        ctx.fillStyle = (robot.status === 'WAITING') ? '#fff' : '#000';
         ctx.textAlign = 'center';
-        ctx.fillText(robot.id, lerpX, lerpY + 3);
+        ctx.fillText(robot.status === 'CHARGING' ? '⚡' : robot.id, lerpX, lerpY + 3);
 
         robotPositions[robot.id] = { x: lerpX, y: lerpY };
       });
@@ -187,15 +146,10 @@ const SimulationCanvas = ({ robots, nodes, heatmap, gridSettings, isAuto }) => {
       cancelAnimationFrame(animationRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [robots, gridSettings, robotPositions]);
+  }, [robots, robotPositions]);
 
   return (
     <div className="glass h-full w-full relative overflow-hidden bg-black/40 border border-white/5">
-      <div className="absolute top-4 left-4 z-10">
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-black/30 px-2 py-1 rounded">
-          Operational Live Matrix // {gridSettings.rows}x{gridSettings.cols}
-        </span>
-      </div>
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );

@@ -11,6 +11,7 @@ import AnimatedBackground from './components/AnimatedBackground';
 import SpotlightLayer from './components/SpotlightLayer';
 import Toast from './components/Toast';
 import ConfigScreen from './components/ConfigScreen';
+import HubStatusCard from './components/HubStatusCard';
 
 // Hooks
 import { useWebSocket } from './hooks/useWebSocket';
@@ -34,6 +35,7 @@ function App() {
   const [toasts, setToasts] = useState([]);
   const [gridSettings, setGridSettings] = useState({ rows: 3, cols: 2 });
   const [activeCount, setActiveCount] = useState(0);
+  const [hubs, setHubs] = useState([]);
 
   const addToast = (message, type = 'info') => {
     const id = Date.now();
@@ -48,7 +50,7 @@ function App() {
     if (!isConfigured) return;
     try {
       const [nodesResp, metricsResp] = await Promise.all([
-        fetch(`${API_BASE}/map/`),
+        fetch(`${API_BASE}/map`),
         fetch(`${API_BASE}/simulate/metrics`)
       ]);
       
@@ -69,6 +71,7 @@ function App() {
       setRobots(wsData.robots);
       setHeatmap(wsData.heatmap || []);
       setActiveCount(wsData.activeCount || 0);
+      setHubs(wsData.hubs || []);
     }
   }, [wsData]);
 
@@ -124,7 +127,7 @@ function App() {
   // Filtered robots for display (To prevent DOM lag on high N)
   const displayRobots = useMemo(() => robots.slice(0, 12), [robots]);
 
-  const movingCount = robots.filter(r => r.status === 'moving').length;
+  const movingCount = robots.filter(r => r.status === 'MOVING').length;
 
   if (!isConfigured) {
     return <ConfigScreen onComplete={() => setIsConfigured(true)} />;
@@ -224,25 +227,29 @@ function App() {
                 ))
               ) : (
                 <div className="col-span-2 glass p-10 flex flex-col items-center justify-center opacity-40">
-                  <span className="text-4xl mb-4">🛰️</span>
-                  <span className="hud-font">Scanning for signals...</span>
+                  <div className="w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin mb-4" />
+                  <span className="hud-font">Initializing Simulation...</span>
                 </div>
               )}
             </div>
           </div>
 
           <div className="space-y-10">
-             <div className="glass p-8 h-full min-h-[400px] flex flex-col">
+             <div className="glass p-8 h-1/2 flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="hud-font text-xl border-l-4 border-emerald-500 pl-4">Signal Logs</h2>
                 </div>
                 <div className="flex-grow bg-black/20 rounded-xl border border-white/5 p-4 font-mono text-[10px] text-emerald-400/80 overflow-y-auto space-y-2">
-                   {robots.slice(0, 50).map(r => (
-                     <div key={r.id} className="border-l border-emerald-500/30 pl-2">
-                        [<span className="text-emerald-200">{new Date().toLocaleTimeString()}</span>] UNIT_{r.id} -&gt; STATE_{r.status.toUpperCase()} @ NODE_{r.current_node}
-                     </div>
-                   ))}
+                    {robots.slice(0, 50).map(r => (
+                      <div key={r.id} className="border-l border-emerald-500/30 pl-2">
+                         [<span className="text-emerald-200">{new Date().toLocaleTimeString()}</span>] UNIT_{r.id} -&gt; {r.status} @ {r.current_node} &gt; {r.next_node} ({Math.round(r.progress * 100)}%)
+                      </div>
+                    ))}
                 </div>
+             </div>
+             
+             <div className="h-1/2">
+                <HubStatusCard hubs={hubs} />
              </div>
           </div>
         </div>

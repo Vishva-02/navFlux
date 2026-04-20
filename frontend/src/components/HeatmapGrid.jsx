@@ -22,14 +22,14 @@ const HeatmapGrid = ({ heatmap }) => {
         {heatmap?.map((lane) => (
           <div 
             key={lane.lane_id}
-            className={`flex flex-col p-4 rounded-xl border transition-all duration-300 ${getCongestionColor(lane.congestion)}`}
+            className={`flex flex-col p-4 rounded-xl border transition-all duration-300 ${getCongestionColor(lane.congestion_score)}`}
           >
             <span className="font-orbitron text-[10px] opacity-70 mb-1">{lane.lane_id}</span>
             <div className="flex justify-between items-baseline">
-              <span className="text-xl font-rajdhani font-bold">{lane.usage}</span>
+              <span className="text-xl font-rajdhani font-bold">{lane.usage_count}</span>
               <span className="text-[10px] opacity-50 uppercase">Loads</span>
             </div>
-            {lane.occupancy > 0 && (
+            {lane.usage_count > 0 && (
               <div className="mt-2 flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-neon-cyan animate-ping" />
                 <span className="text-[8px] font-bold tracking-tighter text-white">ACTIVE OPS</span>

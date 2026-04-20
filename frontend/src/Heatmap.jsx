@@ -8,7 +8,7 @@ const Heatmap = ({ refreshTrigger }) => {
 
   const fetchHeatmap = async () => {
     try {
-      const resp = await fetch(`${API_BASE}/heatmap/`)
+      const resp = await fetch(`${API_BASE}/heatmap`)
       if (resp.ok) {
         const data = await resp.json()
         setHeatmap(data)

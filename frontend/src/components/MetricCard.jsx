@@ -17,7 +17,8 @@ const MetricCard = ({ label, value, unit, icon, colorClass }) => {
         setDisplayValue(end);
         clearInterval(timer);
       } else {
-        setDisplayValue(Math.round(start * 100) / 100);
+        // If the end value is an integer, show rounded integers for a cleaner look
+        setDisplayValue(Number.isInteger(end) ? Math.round(start) : Math.round(start * 100) / 100);
       }
     }, 16);
 

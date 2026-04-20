@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&family=Inter:wght@400;600;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -10,8 +11,6 @@
   --color-neon-pink: #ff007a;
   --color-bg-deep: #020617;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&family=Inter:wght@400;600;800&display=swap');
 
 @layer base {
   body {
