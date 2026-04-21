@@ -203,7 +203,7 @@ async def startup_event():
 
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return {"status": "running"}
 
 @app.get("/simulate/metrics")
 def get_metrics():
