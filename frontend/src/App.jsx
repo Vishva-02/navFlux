@@ -18,8 +18,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import { useAutoSimulation } from './hooks/useAutoSimulation';
 import { useMousePosition } from './hooks/useMousePosition';
 
-const WS_URL = 'ws://127.0.0.1:8000/ws/stream';
-const API_BASE = 'http://127.0.0.1:8000';
+import { API_BASE, WS_URL } from './config';
 
 function App() {
   const mousePosition = useMousePosition();

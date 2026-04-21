@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE } from '../config';
 
 function ConfigScreen({ onComplete }) {
   const [robotCount, setRobotCount] = useState(10);
@@ -15,7 +16,7 @@ function ConfigScreen({ onComplete }) {
 
     setLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/config', {
+      const res = await fetch(`${API_BASE}/api/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ robotCount: Number(robotCount), density })

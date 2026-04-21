@@ -3,7 +3,7 @@ import { useDragScroll } from '../hooks/useDragScroll';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useCenterFocus } from '../hooks/useCenterFocus';
 
-const API_BASE = 'http://127.0.0.1:8000';
+import { API_BASE } from '../config';
 
 const Heatmap = ({ refreshTrigger, mousePosition }) => {
   const [heatmap, setHeatmap] = useState([]);
