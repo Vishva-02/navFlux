@@ -18,7 +18,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import { useAutoSimulation } from './hooks/useAutoSimulation';
 import { useMousePosition } from './hooks/useMousePosition';
 
-import { API_BASE, WS_URL } from './config';
+import { API_URL, WS_URL } from './config';
 
 function App() {
   const mousePosition = useMousePosition();
@@ -49,12 +49,16 @@ function App() {
     if (!isConfigured) return;
     try {
       const [nodesResp, metricsResp] = await Promise.all([
-        fetch(`${API_BASE}/map`),
-        fetch(`${API_BASE}/simulate/metrics`)
+        fetch(`${API_URL}/map`),
+        fetch(`${API_URL}/simulate/metrics`)
       ]);
       
-      if (nodesResp.ok) setNodes((await nodesResp.json()).nodes);
-      if (metricsResp.ok) setMetrics(await metricsResp.json());
+      if (!nodesResp.ok || !metricsResp.ok) {
+        throw new Error('Failed to fetch system data');
+      }
+
+      setNodes((await nodesResp.json()).nodes);
+      setMetrics(await metricsResp.json());
     } catch (err) {
       console.error('Initial sync failed', err);
     }
@@ -77,7 +81,7 @@ function App() {
   const handleStep = useCallback(async () => {
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/simulate/step`, { method: 'POST' });
+      const resp = await fetch(`${API_URL}/simulate/step`, { method: 'POST' });
       if (!resp.ok) {
         const err = await resp.json();
         addToast(err.detail || 'Step failed', 'error');
@@ -91,7 +95,7 @@ function App() {
 
   const handleStart = async () => {
     try {
-      await fetch(`${API_BASE}/simulate/start`, { method: 'POST' });
+      await fetch(`${API_URL}/simulate/start`, { method: 'POST' });
       addToast('Fleet Initialized', 'success');
       fetchInitialData();
     } catch (err) {
@@ -103,7 +107,7 @@ function App() {
     setLoading(true);
     try {
       const targetN = typeof n === 'number' ? n : 8;
-      const resp = await fetch(`${API_BASE}/simulate/reset?n=${targetN}`, { method: 'POST' });
+      const resp = await fetch(`${API_URL}/simulate/reset?n=${targetN}`, { method: 'POST' });
       if (resp.ok) {
         addToast(`System Pulse: ${targetN} units deployed`, 'success');
         fetchInitialData();

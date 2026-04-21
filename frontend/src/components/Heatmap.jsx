@@ -3,7 +3,7 @@ import { useDragScroll } from '../hooks/useDragScroll';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useCenterFocus } from '../hooks/useCenterFocus';
 
-import { API_BASE } from '../config';
+import { API_URL } from '../config';
 
 const Heatmap = ({ refreshTrigger, mousePosition }) => {
   const [heatmap, setHeatmap] = useState([]);
@@ -15,11 +15,10 @@ const Heatmap = ({ refreshTrigger, mousePosition }) => {
 
   const fetchHeatmap = async () => {
     try {
-      const resp = await fetch(`${API_BASE}/heatmap`);
-      if (resp.ok) {
-        const data = await resp.json();
-        setHeatmap(data);
-      }
+      const resp = await fetch(`${API_URL}/heatmap`);
+      if (!resp.ok) throw new Error('Heatmap link severed');
+      const data = await resp.json();
+      setHeatmap(data);
     } catch (err) {
       console.error('Failed to fetch heatmap', err);
     } finally {
