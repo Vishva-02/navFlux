@@ -1,13 +1,6 @@
 # 🚀 navFlux – Lane-Aware Multi-Robot Traffic Control System
 
-navFlux is an intelligent multi-robot traffic simulation system designed to manage robot movement efficiently in structured environments such as warehouses and factories. It uses lane-based rules, congestion awareness, and pathfinding algorithms to ensure smooth and collision-free navigation.
-
----
-
-## 🌐 Live Demo
-
-- 🔗 **Frontend (Vercel)**: https://nav-flux.vercel.app  
-- 🔗 **Backend API (Render)**: https://navflux.onrender.com  
+navFlux is an intelligent multi-robot traffic simulation system designed to manage robot movement efficiently in structured environments such as warehouses and factories. It uses lane-based rules, congestion awareness, and pathfinding algorithms to ensure smooth and collision-free navigation. 
 
 ---
 
